@@ -75,22 +75,25 @@ def checkbox_webhook():
     CSU_name_from_header = request.headers.get("CSU", "UnknownCSU")
     numeric_id = data.get("NumericId", "UnknownNumericID")
 
-item_values = []
+    # =========================================================
+    # ITEM VALUES 1–8
+    # =========================================================
+    item_values = []
     for i in range(1, 9):
         key = f"Please indicate your level of agreement with the following items._item{i}_Column2"
         item_values.append(to_int_or_none(data.get(key)))
 
-    # Unpack them for readability
     (
         item1, item2, item3, item4,
         item5, item6, item7, item8
     ) = item_values
 
-    # Gender & age (numeric codes as strings → ints)
+    # =========================================================
+    # DEMOGRAPHICS
+    # =========================================================
     gender = to_int_or_none(data.get("gender"))
     age = to_int_or_none(data.get("age"))
 
-    # Race flags (booleans to 1/0), plus free-text “other”
     race1 = bool_to_01(data.get("race_1"))
     race2 = bool_to_01(data.get("race_2"))
     race3 = bool_to_01(data.get("race_3"))
@@ -99,16 +102,11 @@ item_values = []
     race6 = bool_to_01(data.get("race_6"))
     race7 = bool_to_01(data.get("race_7"))
     race_other_text = data.get("race_Other:")
-    
-    # Current timestamp in a human-readable format
-    timestamp = datetime.utcnow().isoformat()
 
-    # Optional: store the whole payload as JSON string for debugging/audit
+    timestamp = datetime.utcnow().isoformat()
     raw_payload_str = json.dumps(data)
 
-    # Build the row to append – order must match your sheet columns
-    # row = [timestamp, client_name_from_header, numeric_id, raw_payload_str]
-row = [
+    row = [
         timestamp,
         client_name_from_header,
         CSU_name_from_header,
@@ -153,6 +151,7 @@ if __name__ == "__main__":
     # For local testing only; in production use gunicorn or similar
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
+
 
 
 
