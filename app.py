@@ -25,6 +25,32 @@ creds = ServiceAccountCredentials.from_json_keyfile_name(
 gclient = gspread.authorize(creds)
 sheet = gclient.open_by_key(SPREADSHEET_ID).worksheet(WORKSHEET_NAME)
 
+def to_int_or_none(val):
+    """Try to convert a value to int; if it fails or is empty, return None."""
+    if val is None:
+        return None
+    if isinstance(val, int):
+        return val
+    s = str(val).strip()
+    if s == "":
+        return None
+    try:
+        return int(s)
+    except ValueError:
+        return None
+
+def bool_to_01(val):
+    """Convert booleans / boolean-like values to 1/0; return None if unknown."""
+    if isinstance(val, bool):
+        return 1 if val else 0
+    if val is None:
+        return None
+    s = str(val).strip().lower()
+    if s in ("true", "1", "yes", "y"):
+        return 1
+    if s in ("false", "0", "no", "n"):
+        return 0
+    return None
 
 @app.route("/checkbox-webhook", methods=["POST"])
 def checkbox_webhook():
@@ -46,8 +72,33 @@ def checkbox_webhook():
     # survey_name = data.get("SurveyName") or data.get("surveyName") or "UnknownSurvey"
     # response_id = data.get("ResponseId") or data.get("responseId") or "UnknownResponse"
     client_name_from_header = request.headers.get("orgname", "UnknownClient")
-    # numeric_id = data.get("response", {}).get("numeric_id", "UnknownNumericID")
+    CSU_name_from_header = request.headers.get("CSU", "UnknownCSU")
     numeric_id = data.get("NumericId", "UnknownNumericID")
+
+item_values = []
+    for i in range(1, 9):
+        key = f"Please indicate your level of agreement with the following items._item{i}_Column2"
+        item_values.append(to_int_or_none(data.get(key)))
+
+    # Unpack them for readability
+    (
+        item1, item2, item3, item4,
+        item5, item6, item7, item8
+    ) = item_values
+
+    # Gender & age (numeric codes as strings → ints)
+    gender = to_int_or_none(data.get("gender"))
+    age = to_int_or_none(data.get("age"))
+
+    # Race flags (booleans to 1/0), plus free-text “other”
+    race1 = bool_to_01(data.get("race_1"))
+    race2 = bool_to_01(data.get("race_2"))
+    race3 = bool_to_01(data.get("race_3"))
+    race4 = bool_to_01(data.get("race_4"))
+    race5 = bool_to_01(data.get("race_5"))
+    race6 = bool_to_01(data.get("race_6"))
+    race7 = bool_to_01(data.get("race_7"))
+    race_other_text = data.get("race_Other:")
     
     # Current timestamp in a human-readable format
     timestamp = datetime.utcnow().isoformat()
@@ -56,7 +107,32 @@ def checkbox_webhook():
     raw_payload_str = json.dumps(data)
 
     # Build the row to append – order must match your sheet columns
-    row = [timestamp, client_name_from_header, numeric_id, raw_payload_str]
+    # row = [timestamp, client_name_from_header, numeric_id, raw_payload_str]
+row = [
+        timestamp,
+    client_name_from_header,
+    CSU_name_from_header,
+        numeric_id,
+        item1,
+        item2,
+        item3,
+        item4,
+        item5,
+        item6,
+        item7,
+        item8,
+        gender,
+        age,
+        race1,
+        race2,
+        race3,
+        race4,
+        race5,
+        race6,
+        race7,
+        race_other_text,
+        raw_payload_str,
+    ]
 
     try:
         sheet.append_row(row, value_input_option="RAW")
@@ -77,6 +153,7 @@ if __name__ == "__main__":
     # For local testing only; in production use gunicorn or similar
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
+
 
 
 
