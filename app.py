@@ -110,8 +110,8 @@ item_values = []
     # row = [timestamp, client_name_from_header, numeric_id, raw_payload_str]
 row = [
         timestamp,
-    client_name_from_header,
-    CSU_name_from_header,
+        client_name_from_header,
+        CSU_name_from_header,
         numeric_id,
         item1,
         item2,
@@ -153,6 +153,7 @@ if __name__ == "__main__":
     # For local testing only; in production use gunicorn or similar
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
+
 
 
 
