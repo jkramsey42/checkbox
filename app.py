@@ -46,7 +46,9 @@ def checkbox_webhook():
     # survey_name = data.get("SurveyName") or data.get("surveyName") or "UnknownSurvey"
     # response_id = data.get("ResponseId") or data.get("responseId") or "UnknownResponse"
     client_name_from_header = request.headers.get("orgname", "UnknownClient")
+    numeric_id = (data.get("numeric_id") or "UnknownNumericID")
 
+    
     # Current timestamp in a human-readable format
     timestamp = datetime.utcnow().isoformat()
 
@@ -54,7 +56,7 @@ def checkbox_webhook():
     raw_payload_str = json.dumps(data)
 
     # Build the row to append – order must match your sheet columns
-    row = [timestamp, client_name_from_header, raw_payload_str]
+    row = [timestamp, client_name_from_header, numeric_id, raw_payload_str]
 
     try:
         sheet.append_row(row, value_input_option="RAW")
@@ -75,4 +77,5 @@ if __name__ == "__main__":
     # For local testing only; in production use gunicorn or similar
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
+
 
