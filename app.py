@@ -39,6 +39,25 @@ def to_int_or_none(val):
     except ValueError:
         return None
 
+def parse_gender(val):
+    """Map gender to numeric code:
+       1, 2 as-is; 'Prefer to specify: ...' => 3; otherwise None."""
+    if val is None:
+        return None
+
+    # If it's already like "1" or "2"
+    if str(val).strip() in ("1", "2"):
+        return int(str(val).strip())
+
+    # Handle "Prefer to specify: something"
+    s = str(val).strip()
+    if s.lower().startswith("prefer to specify:"):
+        return 3
+
+    # Fallback if something unexpected comes through
+    return None
+
+
 def bool_to_01(val):
     """Convert booleans / boolean-like values to 1/0; return None if unknown."""
     if isinstance(val, bool):
@@ -91,7 +110,8 @@ def checkbox_webhook():
     # =========================================================
     # DEMOGRAPHICS
     # =========================================================
-    gender = to_int_or_none(data.get("gender"))
+    #gender = to_int_or_none(data.get("gender"))
+    gender = parse_gender(data.get("gender"))
     age = to_int_or_none(data.get("age"))
 
     race1 = bool_to_01(data.get("race_1"))
@@ -151,6 +171,7 @@ if __name__ == "__main__":
     # For local testing only; in production use gunicorn or similar
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
+
 
 
 
